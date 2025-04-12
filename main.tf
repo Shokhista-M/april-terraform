@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {}
-
+# System admin users
 resource "aws_iam_user" "system_users1" {
    name = var.s_a.u_1
 }
@@ -44,6 +44,7 @@ resource "aws_iam_group_policy_attachment" "system_admin_policy" {
    group      = aws_iam_group.system_admins.name
    policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
+# Database admin users
 resource "aws_iam_user" "database_user1"{
     name = "${var.d_u}_1"
 }
@@ -75,4 +76,26 @@ resource "aws_iam_group_membership" "database" {
 resource "aws_iam_group_policy_attachment" "database_admin_policy" {
    group      = aws_iam_group.database_admins.name
    policy_arn = "arn:aws:iam::aws:policy/job-function/DatabaseAdministrator"
+}
+# Read only users
+locals {
+  read_only = ["read_only_user_1", "read_only_user_2", "read_only_user_3"]
+}
+
+resource "aws_iam_user" "read_only" {
+  for_each = toset(local.read_only)
+  name     = each.value
+}
+resource "aws_iam_group" "read_only" {
+   name = "read_only"
+}
+resource "aws_iam_group_membership" "read" {
+   name = "read_only-group-membership"
+   users = local.read_only
+
+   group = aws_iam_group.read_only.name
+}
+resource "aws_iam_group_policy_attachment" "read_only_policy" {
+   group      = aws_iam_group.read_only.name
+   policy_arn = "arn:aws:iam::aws:policy/AmazonConnectReadOnlyAccess"
 }
